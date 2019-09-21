@@ -32,6 +32,7 @@ import org.itxtech.synapseapi.utils.DataPacketEidReplacer;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
 import java.util.*;
 
 /**
@@ -56,8 +57,8 @@ public class SynapsePlayer extends Player {
         }
     }
 
-    public SynapsePlayer(SourceInterface interfaz, SynapseEntry synapseEntry, Long clientID, String ip, int port) {
-        super(interfaz, clientID, ip, port);
+    public SynapsePlayer(SourceInterface interfaz, SynapseEntry synapseEntry, Long clientID, InetSocketAddress address) {
+        super(interfaz, clientID, address);
         this.synapseEntry = synapseEntry;
         this.isSynapseLogin = this.synapseEntry != null;
     }
@@ -263,7 +264,6 @@ public class SynapsePlayer extends Player {
             startGamePacket.z = (float) this.z;
             startGamePacket.yaw = (float) this.yaw;
             startGamePacket.pitch = (float) this.pitch;
-            startGamePacket.seed = -1;
             startGamePacket.dimension = (byte) (this.level.getDimension() & 0xff);
             startGamePacket.worldGamemode = getClientFriendlyGamemode(this.gamemode);
             startGamePacket.difficulty = this.server.getDifficulty();
@@ -292,8 +292,8 @@ public class SynapsePlayer extends Player {
 
         this.server.getLogger().info(this.getServer().getLanguage().translateString("nukkit.player.logIn",
                 TextFormat.AQUA + this.username + TextFormat.WHITE,
-                this.ip,
-                String.valueOf(this.port),
+                this.getAddress(),
+                String.valueOf(this.getPort()),
                 String.valueOf(this.id),
                 this.level.getName(),
                 String.valueOf(NukkitMath.round(this.x, 4)),
@@ -421,23 +421,35 @@ public class SynapsePlayer extends Player {
     }
 
     @Override
+    public boolean dataPacket(DataPacket packet) {
+        if (!this.isSynapseLogin) return super.dataPacket(packet);
+        return sendDataPacket(packet, false, false);
+    }
+
+    @Override
     public int dataPacket(DataPacket packet, boolean needACK) {
         if (!this.isSynapseLogin) return super.dataPacket(packet, needACK);
-        return sendDataPacket(packet, needACK, false);
+        return this.dataPacket(packet) ? 0 : -1;
+    }
+
+    @Override
+    public boolean directDataPacket(DataPacket packet) {
+        if (!this.isSynapseLogin) return super.dataPacket(packet);
+        return sendDataPacket(packet, false, true);
     }
 
     @Override
     public int directDataPacket(DataPacket packet, boolean needACK) {
-        if (!this.isSynapseLogin) return super.directDataPacket(packet, needACK);
-        return sendDataPacket(packet, needACK, true);
+        if (!this.isSynapseLogin) return super.dataPacket(packet, needACK);
+        return this.dataPacket(packet) ? 0 : -1;
     }
 
-    public int sendDataPacket(DataPacket packet, boolean needACK, boolean direct) {
+    public boolean sendDataPacket(DataPacket packet, boolean needACK, boolean direct) {
         packet = DataPacketEidReplacer.replace(packet, this.getId(), REPLACE_ID);
         DataPacketSendEvent ev = new DataPacketSendEvent(this, packet);
         this.server.getPluginManager().callEvent(ev);
         if (ev.isCancelled()) {
-            return -1;
+            return false;
         }
 
         if (!packet.isEncoded) {
@@ -445,7 +457,8 @@ public class SynapsePlayer extends Player {
             packet.isEncoded = true;
         }
 
-        return this.interfaz.putPacket(this, packet, needACK, direct);
+        this.interfaz.putPacket(this, packet, false, direct);
+        return true;
     }
 
     @Override
