@@ -7,7 +7,7 @@
     <name>SynapseAPI</name>
     <groupId>org.itxtech.synapse</groupId>
     <artifactId>SynapseAPI</artifactId>
-    <version>PM1E-X</version>
+    <version>PM1E-X-IGN</version>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -29,7 +29,8 @@
              <groupId>cn.nukkit</groupId>
              <artifactId>nukkit</artifactId>
              <version>1.0-SNAPSHOT</version>
-             <scope>provided</scope>
+             <scope>system</scope>
+             <systemPath>${basedir}/lib/NukkitX-IGN.jar</systemPath>
          </dependency>
     </dependencies>
 
