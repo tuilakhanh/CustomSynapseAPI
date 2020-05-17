@@ -124,7 +124,7 @@ public class SynapseAPI extends PluginBase implements Listener {
                 } else {
                     return false;
                 }
-            } else if (c.equals("hub") || c.equals("lobby")) {
+            } else if (c.equals("lobby")) {
                 List<String> l = getConfig().getStringList("lobbies");
                 if (l.size() == 0) return true;
                 if (!l.contains(p.getSynapseEntry().getServerDescription()) && !p.getSynapseEntry().isLobbyServer()) {
