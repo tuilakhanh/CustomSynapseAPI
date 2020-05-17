@@ -466,6 +466,7 @@ public class SynapsePlayer extends Player {
     }
 
     public boolean sendDataPacket(DataPacket packet, boolean needACK, boolean direct) {
+        packet.protocol = this.protocol; // NukkitX-IGN multiversion support
         packet = DataPacketEidReplacer.replace(packet, this.getId(), REPLACE_ID);
         DataPacketSendEvent ev = new DataPacketSendEvent(this, packet);
         this.server.getPluginManager().callEvent(ev);
